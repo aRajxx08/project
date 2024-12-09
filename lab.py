@@ -1,4 +1,4 @@
-pip install requests beautifulsoup4 pandas
+
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
@@ -33,10 +33,10 @@ print(df)
 
 # Optionally, save the extracted data to a CSV file
 df.to_csv('headings.csv', index=False)
-pip install spacy
-python -m spacy download en_core_web_sm
-python
-Copy code
+
+
+
+ 
 import spacy
 from bs4 import BeautifulSoup
 import requests
@@ -90,7 +90,7 @@ for img in images:
             f.write(img_data)
 
 print("Images have been downloaded!")
-pip install selenium
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
