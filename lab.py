@@ -1,30 +1,54 @@
 import requests
-from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.formatters import SRTFormatter
-from pytube import YouTube
-import re
+from bs4 import BeautifulSoup
+from transformers import pipeline
+import nltk
+nltk.download('punkt')
 
-
-
-
-# Function to scrape YouTube video metadata
-def scrape_video_metadata(url):
+# Function to scrape a website and extract its main content
+def scrape_website(url):
     try:
-        # Create YouTube object
-        yt = YouTube(url)
-        
-        # Print video details
-        print(f"Video Title: {yt.title}")
-        print(f"Video Description: {yt.description[:250]}...")  # Displaying first 250 characters of the description
-        print(f"Video Views: {yt.views}")
-        print(f"Video Length: {yt.length} seconds")
-        print(f"Video Published on: {yt.publish_date}")
-        
-    except Exception as e:
-        print(f"Error: {e}")
+        response = requests.get(url)
+        response.raise_for_status()  # Check if the request was successful
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-# Ask user for the YouTube video URL
-video_url = input("Enter YouTube video URL: ")
+        # Extract text from paragraphs or headers (adjust based on website structure)
+        paragraphs = soup.find_all(['p', 'h1', 'h2', 'h3'])
+        text_content = " ".join([para.get_text() for para in paragraphs])
 
-# Call the function to scrape metadata
-scrape_video_metadata(video_url)
+        return text_content
+    except requests.exceptions.RequestException as e:
+        print(f"Error while accessing the website: {e}")
+        return None
+
+# Function to summarize the extracted text using Hugging Face's transformer model
+def summarize_text(text):
+    # Use a pre-trained summarization model from Hugging Face
+    summarizer = pipeline("summarization")
+    
+    # Split the text if it's too long for the model
+    max_input_length = 1024  # This is model-specific
+    text_chunks = [text[i:i + max_input_length] for i in range(0, len(text), max_input_length)]
+
+    summary = ""
+    for chunk in text_chunks:
+        summary += summarizer(chunk)[0]['summary_text'] + "\n"
+
+    return summary
+
+def main():
+    # Get the URL from the user
+    url = input("Enter the URL of the website to summarize: ")
+
+    # Step 1: Scrape the website
+    website_content = scrape_website(url)
+
+    if website_content:
+        # Step 2: Summarize the extracted text
+        summarized_text = summarize_text(website_content)
+
+        # Step 3: Output the summarized text
+        print("\nSummarized Content:")
+        print(summarized_text)
+
+if __name__ == "__main__":
+    main()
